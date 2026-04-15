@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#b91c1c" />
+<title>壽司郎計算機 Sushiro Calculator</title>
+<style>
+  /* ---------- Reset & base ---------- */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; overscroll-behavior-y: contain; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", sans-serif;
+    background: #fff8f1;
+    color: #111827;
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-text-size-adjust: 100%;
+  }
+  button { font-family: inherit; cursor: pointer; border: 0; }
+  input { font-family: inherit; }
+
+  /* ---------- Layout ---------- */
+  .container { max-width: 28rem; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------- Header ---------- */
+  .header {
+    position: sticky; top: 0; z-index: 20;
+    background: #b91c1c;
+    color: #fff;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  }
+  .header-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    max-width: 28rem; margin: 0 auto;
+  }
+  .header h1 {
+    font-size: 18px; font-weight: 700; line-height: 1.15;
+    margin: 0;
+  }
+  .header p {
+    font-size: 11px; opacity: 0.9; margin: 0;
+  }
+  .reset-btn {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 9999px;
+    transition: background-color 0.15s;
+  }
+  .reset-btn:active { background: rgba(255,255,255,0.3); }
+
+  /* ---------- Main & cards ---------- */
+  main { padding: 16px; padding-bottom: 14rem; max-width: 28rem; margin: 0 auto; }
+
+  .plate-list > * + * { margin-top: 12px; }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #ffedd5;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    padding: 12px;
+  }
+
+  .plate-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .plate-img {
+    width: 96px;
+    height: 84px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .plate-info { flex: 1; min-width: 0; }
+  .plate-name { font-size: 16px; font-weight: 700; line-height: 1.15; }
+  .plate-meta { font-size: 12px; color: #6b7280; margin-top: 1px; }
+  .plate-sub { font-size: 14px; font-weight: 600; color: #b91c1c; margin-top: 4px; }
+
+  .stepper {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .stepper-btn {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 24px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.08s ease, background-color 0.15s ease;
+  }
+  .stepper-btn.dec { background: #f3f4f6; color: #374151; }
+  .stepper-btn.dec:active { background: #e5e7eb; transform: scale(0.9); }
+  .stepper-btn.inc { background: #dc2626; color: #fff; }
+  .stepper-btn.inc:active { background: #b91c1c; transform: scale(0.9); }
+
+  .count-display {
+    min-width: 44px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  /* ---------- Extra items & service charge ---------- */
+  .card.extra { margin-top: 20px; }
+  .card.service { margin-top: 12px; display: flex; align-items: center; justify-content: space-between; }
+
+  .label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+  }
+  .input-row { display: flex; align-items: center; }
+  .currency { font-size: 18px; font-weight: 700; color: #6b7280; margin-right: 8px; }
+  .extra-input {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 600;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    padding: 8px 12px;
+    outline: none;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .extra-input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220,38,38,0.35);
+  }
+
+  .service-label { font-size: 14px; font-weight: 600; color: #1f2937; }
+  .service-sub   { font-size: 12px; color: #6b7280; }
+
+  .footnote {
+    text-align: center;
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 24px;
+  }
+
+  /* ---------- iOS switch ---------- */
+  .switch { position: relative; display: inline-block; width: 52px; height: 32px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0;
+    background: #d1d5db;
+    border-radius: 9999px;
+    transition: background-color 0.2s;
+  }
+  .slider::before {
+    content: ""; position: absolute;
+    height: 28px; width: 28px; left: 2px; top: 2px;
+    background: #fff; border-radius: 9999px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .switch input:checked + .slider { background: #22c55e; }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
+
+  /* ---------- Sticky footer total ---------- */
+  .footer {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+    background: #fff;
+    border-top: 1px solid #fed7aa;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  }
+  .footer-inner {
+    max-width: 28rem; margin: 0 auto;
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .footer-row-1 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .footer-row-1 .val { font-weight: 600; color: #374151; }
+  .footer-row-2 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+  .footer-row-2 .label-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+  }
+  .grand-total {
+    font-size: 30px;
+    font-weight: 800;
+    color: #b91c1c;
+  }
+
+  /* ---------- Number input spinner hide ---------- */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+</style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div>
+        <h1>壽司郎計算機</h1>
+        <p>Sushiro Bill Calculator · 2026</p>
+      </div>
+      <button id="resetBtn" class="reset-btn">全部清除</button>
+    </div>
+  </header>
+
+  <!-- Plates list -->
+  <main>
+    <div id="plateList" class="plate-list"></div>
+
+    <!-- Extra items -->
+    <section class="card extra">
+      <label for="extraInput" class="label">額外加點 (飲料/拉麵/甜點)</label>
+      <div class="input-row">
+        <span class="currency">$</span>
+        <input
+          id="extraInput"
+          class="extra-input"
+          type="number"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          min="0"
+          placeholder="0"
+        />
+      </div>
+    </section>
+
+    <!-- Service charge -->
+    <section class="card service">
+      <div>
+        <div class="service-label">加收 10% 服務費</div>
+        <div class="service-sub">Service Charge</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="serviceToggle" />
+        <span class="slider"></span>
+      </label>
+    </section>
+
+    <p class="footnote">價格依 2026 年台灣壽司郎</p>
+  </main>
+
+  <!-- Sticky footer total -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-row-1">
+        <span>盤數 <span id="totalPlates" class="val">0</span></span>
+        <span>小計 $<span id="subtotal" class="val">0</span></span>
+      </div>
+      <div class="footer-row-2">
+        <span class="label-text">總金額</span>
+        <span class="grand-total">$<span id="grandTotal">0</span></span>
+      </div>
+    </div>
+  </footer>
+
+<script>
+// --- 45° angled ceramic plate SVG (100% self-made, no copyright) ---
+function plateSVG(base, dark, light, id) {
+  const uid = id + Math.random().toString(36).slice(2, 6);
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 140">
+  <defs>
+    <linearGradient id="wall${uid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${dark}"/>
+      <stop offset="100%" stop-color="${base}"/>
+    </linearGradient>
+    <radialGradient id="face${uid}" cx="38%" cy="30%" r="85%">
+      <stop offset="0%" stop-color="${light}"/>
+      <stop offset="50%" stop-color="${base}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </radialGradient>
+    <radialGradient id="well${uid}" cx="45%" cy="38%" r="70%">
+      <stop offset="0%" stop-color="${base}"/>
+      <stop offset="80%" stop-color="${dark}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="80" cy="92" rx="72" ry="6" fill="rgba(0,0,0,0.32)"/>
+  <ellipse cx="80" cy="92" rx="58" ry="3" fill="rgba(0,0,0,0.22)"/>
+  <path d="M 10 62 A 70 16 0 0 0 150 62 L 150 69 A 70 16 0 0 1 10 69 Z"
+        fill="url(#wall${uid})"/>
+  <ellipse cx="80" cy="62" rx="70" ry="16" fill="url(#face${uid})"
+           stroke="${dark}" stroke-width="1"/>
+  <ellipse cx="80" cy="62" rx="60" ry="13" fill="none"
+           stroke="rgba(0,0,0,0.18)" stroke-width="0.7"/>
+  <ellipse cx="80" cy="63" rx="58" ry="12" fill="url(#well${uid})"/>
+  <path d="M 32 56 Q 58 46 100 50 Q 72 54 42 61 Z"
+        fill="rgba(255,255,255,0.5)"/>
+  <path d="M 22 60 A 70 16 0 0 1 78 46"
+        fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="1" stroke-linecap="round"/>
+</svg>`.trim();
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+// Colour palette tuned to the real Sushiro Taiwan plates.
+// Red uses the official Sushiro brand red #e60012 (sourced from sushiro.com.tw CSS).
+const plateData = [
+  { id:'milk_tea', name:'奶茶盤', en:'Milk Tea', price:30,
+    imgUrl: plateSVG('#e4cfa8','#a88860','#f5e8cf','a') },
+  { id:'red',      name:'紅盤',   en:'Red',      price:40,
+    imgUrl: plateSVG('#e60012','#8b0a10','#ff6b6b','b') },
+  { id:'green',    name:'綠盤',   en:'Green',    price:50,
+    imgUrl: plateSVG('#a8d95a','#5a8a2a','#d9f0a8','c') },
+  { id:'silver',   name:'銀盤',   en:'Silver',   price:60,
+    imgUrl: plateSVG('#d4d8dd','#7a8290','#f5f6f8','d') },
+  { id:'blue',     name:'藍盤',   en:'Blue',     price:70,
+    imgUrl: plateSVG('#4a90d9','#1e4a82','#a6cdf0','e') },
+  { id:'gold',     name:'金盤',   en:'Gold',     price:80,
+    imgUrl: plateSVG('#e8b942','#8a5e10','#fce288','f') },
+  { id:'black',    name:'黑盤',   en:'Black',    price:100,
+    imgUrl: plateSVG('#1a1a1a','#000000','#4a4a4a','g') },
+].map(p => ({ ...p, count: 0 }));
+
+const listEl      = document.getElementById('plateList');
+const extraInput  = document.getElementById('extraInput');
+const serviceEl   = document.getElementById('serviceToggle');
+const grandEl     = document.getElementById('grandTotal');
+const subtotalEl  = document.getElementById('subtotal');
+const totalPlatesEl = document.getElementById('totalPlates');
+const resetBtn    = document.getElementById('resetBtn');
+
+function render() {
+  listEl.innerHTML = plateData.map(p => `
+    <div class="card plate-card">
+      <img src="${p.imgUrl}" alt="${p.name}" class="plate-img" loading="lazy" />
+      <div class="plate-info">
+        <div class="plate-name">${p.name}</div>
+        <div class="plate-meta">${p.en} · $${p.price}</div>
+        <div class="plate-sub">小計 $<span data-sub="${p.id}">${p.price * p.count}</span></div>
+      </div>
+      <div class="stepper">
+        <button class="stepper-btn dec" data-act="dec" data-id="${p.id}" aria-label="減少">−</button>
+        <span class="count-display" data-count="${p.id}">${p.count}</span>
+        <button class="stepper-btn inc" data-act="inc" data-id="${p.id}" aria-label="增加">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateTotals() {
+  let subtotal = 0;
+  let plates = 0;
+  plateData.forEach(p => {
+    subtotal += p.price * p.count;
+    plates += p.count;
+    const sub = document.querySelector(`[data-sub="${p.id}"]`);
+    const cnt = document.querySelector(`[data-count="${p.id}"]`);
+    if (sub) sub.textContent = p.price * p.count;
+    if (cnt) cnt.textContent = p.count;
+  });
+  const extra = Math.max(0, parseFloat(extraInput.value) || 0);
+  let total = subtotal + extra;
+  if (serviceEl.checked) total = Math.round(total * 1.1);
+  subtotalEl.textContent = subtotal + (extra ? `+${extra}` : '');
+  totalPlatesEl.textContent = plates;
+  grandEl.textContent = total;
+}
+
+listEl.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const plate = plateData.find(p => p.id === btn.dataset.id);
+  if (!plate) return;
+  if (btn.dataset.act === 'inc') plate.count++;
+  else if (plate.count > 0) plate.count--;
+  updateTotals();
+  if (navigator.vibrate) navigator.vibrate(8);
+});
+
+extraInput.addEventListener('input', updateTotals);
+serviceEl.addEventListener('change', updateTotals);
+
+resetBtn.addEventListener('click', () => {
+  if (!confirm('確定要清除所有數量嗎？')) return;
+  plateData.forEach(p => p.count = 0);
+  extraInput.value = '';
+  serviceEl.checked = false;
+  render();
+  updateTotals();
+});
+
+render();
+updateTotals();
+</script>
+</body>
+</html>
