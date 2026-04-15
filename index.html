@@ -30,10 +30,13 @@
     background: #b91c1c;
     color: #fff;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    /* Extend red background up into the iPhone status bar / notch area */
+    padding-top: env(safe-area-inset-top);
   }
   .header-inner {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px;
+    /* Extra top padding so the reset button is never under the notch or too close to the edge */
+    padding: 22px 16px 14px;
     max-width: 28rem; margin: 0 auto;
   }
   .header h1 {
@@ -250,7 +253,7 @@
     <!-- Service charge -->
     <section class="card service">
       <div>
-        <div class="service-label">加收 10% 服務費</div>
+        <div class="service-label">加收 5% 服務費</div>
         <div class="service-sub">Service Charge</div>
       </div>
       <label class="switch">
@@ -373,7 +376,7 @@ function updateTotals() {
   });
   const extra = Math.max(0, parseFloat(extraInput.value) || 0);
   let total = subtotal + extra;
-  if (serviceEl.checked) total = Math.round(total * 1.1);
+  if (serviceEl.checked) total = Math.round(total * 1.05);
   subtotalEl.textContent = subtotal + (extra ? `+${extra}` : '');
   totalPlatesEl.textContent = plates;
   grandEl.textContent = total;
